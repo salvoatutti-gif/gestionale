@@ -28,7 +28,7 @@ input[type=checkbox]{width:auto;accent-color:var(--ac)}
 .tk{display:flex;gap:8px;align-items:center;padding:3px 0}.tk input[type=text]{flex:1}.done{text-decoration:line-through;color:var(--mu)}
 .tot{font-size:22px;font-weight:700}.ov{color:var(--ac)}
 @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-#app>*{animation:in .25s ease both}
+#app>*{animation:in .25s ease backwards}
 button{transition:transform .12s,box-shadow .12s,background .15s}button:hover{box-shadow:0 2px 8px #0002}button:active{transform:scale(.95)}
 .cta{width:100%;padding:22px;font-size:20px;font-weight:700;border-radius:16px;background:linear-gradient(135deg,var(--ac),#f0803c);color:#fff;border:0;margin-bottom:10px;box-shadow:0 6px 18px #e2483d44}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.two .big{min-height:110px}
@@ -107,6 +107,9 @@ button svg:not(.ic){width:20px;height:20px;fill:none;stroke:currentColor;stroke-
 button.x{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 button[aria-label=Elimina]:not(.dl){display:none}
 .tbar .hm{background:#ffffff10;color:var(--lm);border:1.5px solid var(--lm);box-shadow:none}.tbar .hm.on{background:var(--lm);color:#0a0a0b;box-shadow:0 0 18px #c6f43244}.tbar .hm svg{stroke:currentColor}
+.swr{position:absolute;display:flex;align-items:center;justify-content:flex-end;padding-right:22px;gap:8px;font-weight:700;font-size:14px;background:var(--rd);color:#fff;z-index:0;pointer-events:none;opacity:.6}.swr svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}.swr.go svg{transform:scale(1.4)}
+:root{--rd:#ff453a}
+.swr{background:#ff453a}
 #pr{display:none}
 @media print{body>*:not(#pr){display:none!important}#pr{display:block;color:#111;background:#fff;font:13px/1.5 Georgia,serif;padding:10mm}#pr table{width:100%;border-collapse:collapse}#pr td,#pr th{padding:6px 4px;border-bottom:1px solid #ccc;text-align:left}#pr .r{text-align:right}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -266,10 +269,13 @@ function tbar(){const d=document.createElement('div'),A={list:'list',det:'list',
 function hwBack(){const o=document.querySelector('.md,.dr');if(o){o.remove();return true}if(HS.length){back();return true}if(V.v!='home'){go('home');return true}return false}
 function toast(m,o){const t=document.createElement('div');t.className='ts';t.textContent=m;if(o){const b=document.createElement('button');b.textContent=o.label;b.className='p';b.style.margin='-4px -8px -4px 14px';b.onclick=()=>{t.remove();o.fn()};t.appendChild(b)}document.body.appendChild(t);setTimeout(()=>t.remove(),o?5000:2200)}
 let sw=null;
-const delBtn=t=>{for(let n=t;n&&n.id!='app';n=n.parentElement){const b=n.querySelectorAll('button[aria-label=Elimina]:not(.dl)');if(b.length==1)return[n,b[0]];if(b.length>1)return null}return null};
+const delBtn=t=>{let res=null;for(let n=t;n&&n.id!='app';n=n.parentElement){const b=n.querySelectorAll('button[aria-label=Elimina]:not(.dl)');if(b.length>1||n.querySelector('input[id],textarea[id],select[id]'))break;if(b.length==1)res=[n,b[0]]}return res};
 document.addEventListener('touchstart',e=>{if(e.target.closest('.grip,.tbar,.md,.dr,.sbar'))return;const r=delBtn(e.target);if(!r)return;const t=e.touches[0];sw={r:r[0],b:r[1],x:t.clientX,y:t.clientY,on:0,dx:0}},{passive:true});
-document.addEventListener('touchmove',e=>{if(!sw)return;const t=e.touches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y;if(!sw.on){if(Math.abs(dy)>14&&Math.abs(dy)>Math.abs(dx)){sw=null;return}if(dx<-14&&Math.abs(dx)>Math.abs(dy))sw.on=1;else return}sw.dx=Math.min(0,dx);sw.r.style.transition='none';sw.r.style.transform='translateX('+sw.dx+'px)';sw.r.style.opacity=1+sw.dx/320},{passive:true});
-document.addEventListener('touchend',()=>{if(!sw)return;const r=sw.r,b=sw.b,ok=sw.on&&sw.dx<-90;sw=null;r.style.transition='transform .2s,opacity .2s';r.style.transform='';r.style.opacity='';if(!ok)return;if((b.getAttribute('onclick')||'').includes('ask('))return b.click();const snap=JSON.stringify(S);b.click();toast('Eliminato',{label:'Annulla',fn:()=>{S=JSON.parse(snap);sv();render()}})});
+document.addEventListener('touchmove',e=>{if(!sw)return;const t=e.touches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y;if(!sw.on){if(Math.abs(dy)>14&&Math.abs(dy)>Math.abs(dx)){sw=null;return}if(dx<-14&&Math.abs(dx)>Math.abs(dy))swStart();else return}sw.dx=Math.min(0,dx);const r=sw.r,p=Math.min(1,-sw.dx/sw.th);r.style.transition='none';r.style.transform='translateX('+sw.dx+'px)';sw.rv.style.opacity=.6+.4*p;sw.rv.classList.toggle('go',p>=1)},{passive:true});
+function swStart(){const r=sw.r,cs=getComputedStyle(r),w=document.createElement('div'),v=document.createElement('div');sw.on=1;sw.th=Math.max(100,r.offsetWidth*.4);w.style.cssText='position:relative;margin:'+cs.margin+';flex:'+cs.flex+';min-width:0;border-radius:'+cs.borderRadius;v.className='swr';v.style.cssText='left:0;top:0;width:100%;height:100%;border-radius:'+cs.borderRadius;v.innerHTML='<span>Elimina</span>'+IC2.del;r.replaceWith(w);w.append(v,r);sw.w=w;sw.rv=v;sw.old=[r.style.position,r.style.zIndex,r.style.background,r.style.margin];r.style.position='relative';r.style.zIndex=1;r.style.margin='0';r.style.background='#17181b';r.style.backdropFilter=r.style.webkitBackdropFilter='none'}
+function swEnd(s,del){const r=s.r;r.style.transition='transform .2s ease,opacity .2s';if(del){r.style.transform='translateX(-'+(r.offsetWidth+30)+'px)';r.style.opacity=0;s.rv.style.opacity=1}else r.style.transform='';setTimeout(()=>{if(s.w.isConnected)s.w.replaceWith(r);[r.style.position,r.style.zIndex,r.style.background,r.style.margin]=s.old;r.style.backdropFilter=r.style.webkitBackdropFilter='';r.style.transform='';r.style.opacity='';r.style.transition='';if(del){const b=s.b;if((b.getAttribute('onclick')||'').includes('ask('))return b.click();const snap=JSON.stringify(S);b.click();toast('Eliminato',{label:'Annulla',fn:()=>{S=JSON.parse(snap);sv();render()}})}},210)}
+document.addEventListener('touchend',()=>{if(!sw)return;const s=sw;sw=null;if(!s.on)return;swEnd(s,s.dx<-s.th)});
+document.addEventListener('touchcancel',()=>{if(sw&&sw.on){const s=sw;sw=null;swEnd(s,0)}else sw=null});
 function newP(){D={id:uid(),sv:[],tk:[],ses:[],pay:[],qs:'bozza',st:'Da iniziare',ty:'Montaggio video',created:td(),dt:'%',dv:0,ex:0,vat:S.set.vat,est:'',cat:S.cat.filter(c=>c.on).map(c=>({...c,on:0})),isNew:1};go('new')}
 function editP(id){const p=JSON.parse(JSON.stringify(gp(id)));const have=p.sv.map(s=>s.name);p.cat=[...p.sv.map(s=>({...s,on:1})),...S.cat.filter(c=>c.on&&!have.includes(c.name)).map(c=>({...c,on:0}))];D=p;go('new')}
 function form(){const cats=[...new Set(D.cat.map(c=>c.cat))];
